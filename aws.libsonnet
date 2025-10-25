@@ -18,6 +18,7 @@ local tf = import 'tf.libsonnet';
           Name: cfg.name,
         },
       },
+      [if std.member(std.get(cfg, 'import', []), 'bucket') then 'import_id']: top.bucket.arguments.bucket,
     },
     ownership_controls: tf.ResourceBase {
       type: 'aws_s3_bucket_ownership_controls',
@@ -80,7 +81,7 @@ local tf = import 'tf.libsonnet';
   // Base DNS for a simple domain, with a zone and a single A record.
   // This A record in incomplete so that it can vary between BucketDNS and
   // CloudFrontDNS
-  BaseDNS: {
+  BaseDNS: tf.MergedOut {
     local top = self,
     dns_zone: tf.ResourceBase {
       name: top.cfg.name,
@@ -195,7 +196,7 @@ local tf = import 'tf.libsonnet';
     // It proves ownership of this domain.
     tls_dns_record: tf.ResourceBase {
       type: 'aws_route53_record',
-      name: 'validation_record',
+      name: top.cfg.name + '_validation_record',
       arguments: {
         for_each: tf.TemplateStringBase {
           content:

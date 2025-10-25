@@ -1,14 +1,15 @@
 {
   // Provide an out field that is all the top-level field with their .out
   // members, if available.
+  useOut(o): if std.type(o) == 'object' && std.objectHas(o, 'out')
+  then o.out else o,
   FieldsOut: {
     local top = self,
     out: {
       [f]:
         // If a field value has an 'out' member, use that.  Otherwise,
         // use the value itself.
-        if std.type(top[f]) == 'object' && std.objectHas(top[f], 'out')
-        then top[f].out else top[f]
+        $.useOut(top[f])
       for f in std.objectFields(top)
       if f != 'out'
     },
@@ -46,15 +47,14 @@
     arguments: error '%s requires arguments' % self._cls,
     local arguments = ($.FieldsOut + self.arguments).out,
 
+    subpath: $.TemplateStringBase {
+      elements: [top.type] + if top.name == null then [] else [top.name],
+      content: std.join('.', self.elements),
+    },
+
     // The path through tofu identifiers, for this item, ending in the name if
     // applicable.  (A templateString)
-    path: $.TemplateStringBase {
-      elements:
-        [top.kind, top.type] + if top.name == null then [] else [top.name],
-      content: std.join(
-        '.', self.elements
-      ),
-    },
+    path: top.subpath { elements: [top.kind] + super.elements },
 
     // The id of this item, as a TemplateString.
     id: self.attr('id'),
@@ -74,8 +74,16 @@
 
   // A specialized ItemBase for a resource
   ResourceBase: self.ItemBase {
+    local top = self,
     _cls:: 'ResourceBase',
     kind: 'resource',
+    out+: {
+      [if std.get(top, 'import_id') != null then 'import']+:
+        [$.FieldsOut {
+          id: top.import_id,
+          to: top.subpath.content,
+        }.out],
+    },
   },
 
   // FieldsOut comes last so that here, self.out is overridden
