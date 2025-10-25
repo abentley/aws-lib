@@ -14,20 +14,17 @@ local tf = import 'tf.libsonnet';
       name: cfg.name,
       arguments: {
         bucket: cfg.bucket_name,
-        tags: {
-          Name: cfg.name,
-        },
+        tags: { Name: cfg.name },
       },
-      [if std.member(std.get(cfg, 'import', []), 'bucket') then 'import_id']: top.bucket.arguments.bucket,
+      [if std.member(std.get(cfg, 'import', []), 'bucket') then 'import_id']:
+        top.bucket.arguments.bucket,
     },
     ownership_controls: tf.ResourceBase {
       type: 'aws_s3_bucket_ownership_controls',
       name: cfg.name,
       arguments: {
         bucket: top.bucket.id,
-        rule: {
-          object_ownership: 'BucketOwnerPreferred',
-        },
+        rule: { object_ownership: 'BucketOwnerPreferred' },
       },
     },
     public_access_block: tf.ResourceBase {
@@ -86,9 +83,7 @@ local tf = import 'tf.libsonnet';
     dns_zone: tf.ResourceBase {
       name: top.cfg.name,
       type: 'aws_route53_zone',
-      arguments: {
-        name: top.cfg.bucket_name,
-      },
+      arguments: { name: top.cfg.bucket_name },
     },
     dns_record: tf.ResourceBase {
       name: top.cfg.name,
@@ -121,10 +116,7 @@ local tf = import 'tf.libsonnet';
       arguments: {
         domain_name: top.cfg.bucket_name,
         validation_method: 'DNS',
-
-        lifecycle: {
-          create_before_destroy: true,
-        },
+        lifecycle: { create_before_destroy: true },
       },
     },
   },
@@ -154,21 +146,13 @@ local tf = import 'tf.libsonnet';
             origin_keepalive_timeout: 5,
             origin_protocol_policy: 'http-only',
             origin_read_timeout: 30,
-            origin_ssl_protocols: [
-              'SSLv3',
-              'TLSv1',
-              'TLSv1.1',
-              'TLSv1.2',
-            ],
+            origin_ssl_protocols: ['SSLv3', 'TLSv1', 'TLSv1.1', 'TLSv1.2'],
           },
           origin_id: top.bucket.attr('bucket_regional_domain_name'),
           domain_name: top.website_config.attr('website_endpoint'),
         },
         restrictions: {
-          geo_restriction: {
-            restriction_type: 'none',
-            locations: [],
-          },
+          geo_restriction: { restriction_type: 'none', locations: [] },
         },
         viewer_certificate: tf.FieldsOut {
           acm_certificate_arn: top.tls_certificate.attr('arn'),
@@ -225,6 +209,5 @@ local tf = import 'tf.libsonnet';
         ttl: 60,
       },
     },
-
   },
 }
